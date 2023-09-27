@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import tensorflow as tf
-
+from keras_cv import bounding_box
 from keras_cv.api_export import keras_cv_export
 from keras_cv.layers.preprocessing.base_image_augmentation_layer import (
     BaseImageAugmentationLayer,
@@ -41,10 +41,12 @@ class CutMix(BaseImageAugmentationLayer):
         self,
         alpha=1.0,
         seed=None,
+        bounding_box_format=None,
         **kwargs,
     ):
         super().__init__(seed=seed, **kwargs)
         self.alpha = alpha
+        self.bounding_box_format=bounding_box_format
         self.seed = seed
 
     def _sample_from_beta(self, alpha, beta, shape):
@@ -61,6 +63,7 @@ class CutMix(BaseImageAugmentationLayer):
         images = inputs.get("images", None)
         labels = inputs.get("labels", None)
         segmentation_masks = inputs.get("segmentation_masks", None)
+        bounding_boxes=inputs.get("bounding_boxes",None)
 
         (
             images,
@@ -89,6 +92,12 @@ class CutMix(BaseImageAugmentationLayer):
             )
             inputs["segmentation_masks"] = segmentation_masks
 
+        if bounding_boxes is not None:
+            bounding_boxes=self._update_bounding_boxes(
+                bounding_boxes,
+                
+            )
+            inputs["bounding_boxes"] = bounding_boxes
         inputs["images"] = images
 
         return inputs
@@ -100,6 +109,7 @@ class CutMix(BaseImageAugmentationLayer):
             "expected. Please call the layer with 2 or more samples."
         )
 
+    
     def _cutmix(self, images):
         """Apply cutmix."""
         input_shape = tf.shape(images)
@@ -186,7 +196,33 @@ class CutMix(BaseImageAugmentationLayer):
         )
 
         return segmentation_masks
-
+    
+    def _update_bounding_boxes(
+        self,
+        bounding_boxes,
+        
+    )
+        bounding_boxes = bounding_box.to_dense(bounding_boxes)
+        bounding_boxes = bounding_box.convert_format(
+            bounding_boxes,
+            source=self.bounding_box_format,
+            target="rel_xyxy",
+            images=images,
+        )
+        bounding_boxes = bounding_box.clip_to_image(
+            bounding_boxes,
+            bounding_box_format="rel_xyxy",
+            images=raw_images,
+        )
+        bounding_boxes = bounding_box.convert_format(
+            bounding_boxes,
+            source="rel_xyxy",
+            target=self.bounding_box_format,
+            dtype=self.compute_dtype,
+            images=raw_images,
+        )
+        return bounding_boxes
+    
     def _validate_inputs(self, inputs):
         images = inputs.get("images", None)
         labels = inputs.get("labels", None)
