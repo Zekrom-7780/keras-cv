@@ -14,8 +14,8 @@
 import copy
 import warnings
 
-import keras_cv
 from keras_cv import bounding_box
+from keras_cv import layers
 from keras_cv.api_export import keras_cv_export
 from keras_cv.backend import keras
 from keras_cv.backend import ops
@@ -353,22 +353,23 @@ class YOLOV8Detector(Task):
     ```python
     images = tf.ones(shape=(1, 512, 512, 3))
     labels = {
-        "boxes": [
+        "boxes": tf.constant([
             [
                 [0, 0, 100, 100],
                 [100, 100, 200, 200],
                 [300, 300, 100, 100],
             ]
-        ],
-        "classes": [[1, 1, 1]],
+        ], dtype=tf.float32),
+        "classes": tf.constant([[1, 1, 1]], dtype=tf.int64),
     }
+
     model = keras_cv.models.YOLOV8Detector(
         num_classes=20,
         bounding_box_format="xywh",
         backbone=keras_cv.models.YOLOV8Backbone.from_preset(
-            "yolo_v8_m_coco"
+            "yolo_v8_m_backbone_coco"
         ),
-        fpn_depth=2.
+        fpn_depth=2
     )
 
     # Evaluate model without box decoding and NMS
@@ -430,7 +431,7 @@ class YOLOV8Detector(Task):
         self.bounding_box_format = bounding_box_format
         self._prediction_decoder = (
             prediction_decoder
-            or keras_cv.layers.NonMaxSuppression(
+            or layers.NonMaxSuppression(
                 bounding_box_format=bounding_box_format,
                 from_logits=False,
                 confidence_threshold=0.2,

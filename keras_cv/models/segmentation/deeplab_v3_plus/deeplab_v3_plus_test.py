@@ -32,7 +32,7 @@ from keras_cv.tests.test_case import TestCase
 class DeepLabV3PlusTest(TestCase):
     def test_deeplab_v3_plus_construction(self):
         backbone = ResNet18V2Backbone(input_shape=[512, 512, 3])
-        model = DeepLabV3Plus(backbone=backbone, num_classes=1)
+        model = DeepLabV3Plus(backbone=backbone, num_classes=2)
         model.compile(
             optimizer="adam",
             loss=keras.losses.BinaryCrossentropy(),
@@ -42,7 +42,7 @@ class DeepLabV3PlusTest(TestCase):
     @pytest.mark.large
     def test_deeplab_v3_plus_call(self):
         backbone = ResNet18V2Backbone(input_shape=[512, 512, 3])
-        model = DeepLabV3Plus(backbone=backbone, num_classes=1)
+        model = DeepLabV3Plus(backbone=backbone, num_classes=2)
         images = np.random.uniform(size=(2, 512, 512, 3))
         _ = model(images)
         _ = model.predict(images)
@@ -74,6 +74,18 @@ class DeepLabV3PlusTest(TestCase):
             self.assertNotAllEqual(w1, w2)
             self.assertFalse(ops.any(ops.isnan(w2)))
 
+    @pytest.mark.large
+    def test_with_model_preset_forward_pass(self):
+        model = DeepLabV3Plus.from_preset(
+            "deeplab_v3_plus_resnet50_pascalvoc",
+            num_classes=21,
+            input_shape=[512, 512, 3],
+        )
+        image = np.ones((1, 512, 512, 3))
+        output = ops.expand_dims(ops.argmax(model(image), axis=-1), axis=-1)
+        expected_output = np.zeros((1, 512, 512, 1))
+        self.assertAllClose(output, expected_output)
+
     @parameterized.named_parameters(
         ("tf_format", "tf", "model"),
         ("keras_format", "keras_v3", "model.keras"),
@@ -83,7 +95,7 @@ class DeepLabV3PlusTest(TestCase):
         target_size = [512, 512, 3]
 
         backbone = ResNet18V2Backbone(input_shape=target_size)
-        model = DeepLabV3Plus(backbone=backbone, num_classes=1)
+        model = DeepLabV3Plus(backbone=backbone, num_classes=2)
 
         input_batch = np.ones(shape=[2] + target_size)
         model_output = model(input_batch)

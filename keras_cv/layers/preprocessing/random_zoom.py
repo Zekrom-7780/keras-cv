@@ -14,7 +14,7 @@
 
 
 import tensorflow as tf
-from keras import backend
+from tensorflow.keras import backend
 
 from keras_cv.api_export import keras_cv_export
 from keras_cv.layers.preprocessing.vectorized_base_image_augmentation_layer import (  # noqa: E501
@@ -192,6 +192,31 @@ class RandomZoom(VectorizedBaseImageAugmentationLayer):
 
     def augment_labels(self, labels, transformations, **kwargs):
         return labels
+
+    def augment_segmentation_masks(
+        self, segmentation_masks, transformations, **kwargs
+    ):
+        segmentation_masks = preprocessing_utils.ensure_tensor(
+            segmentation_masks, self.compute_dtype
+        )
+        original_shape = segmentation_masks.shape
+        mask_shape = tf.shape(segmentation_masks)
+        mask_hd = tf.cast(mask_shape[H_AXIS], tf.float32)
+        mask_wd = tf.cast(mask_shape[W_AXIS], tf.float32)
+        width_zooms = transformations["width_zooms"]
+        height_zooms = transformations["height_zooms"]
+        zooms = tf.cast(
+            tf.concat([width_zooms, height_zooms], axis=1), dtype=tf.float32
+        )
+        outputs = preprocessing_utils.transform(
+            segmentation_masks,
+            self.get_zoom_matrix(zooms, mask_hd, mask_wd),
+            fill_mode=self.fill_mode,
+            fill_value=self.fill_value,
+            interpolation="nearest",
+        )
+        outputs.set_shape(original_shape)
+        return outputs
 
     def get_zoom_matrix(self, zooms, image_height, image_width, name=None):
         """Returns projective transform(s) for the given zoom(s).

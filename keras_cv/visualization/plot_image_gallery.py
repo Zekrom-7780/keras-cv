@@ -17,7 +17,6 @@ import math
 import numpy as np
 import tensorflow as tf
 
-import keras_cv
 from keras_cv import utils
 from keras_cv.api_export import keras_cv_export
 from keras_cv.utils import assert_matplotlib_installed
@@ -117,9 +116,6 @@ def plot_image_gallery(
     """
     assert_matplotlib_installed("plot_bounding_box_gallery")
 
-    if path is None and show is None:
-        # Default to showing the image
-        show = True
     if path is not None and show:
         raise ValueError(
             "plot_gallery() expects either `path` to be set, or `show` "
@@ -163,7 +159,7 @@ def plot_image_gallery(
         fig.legend(handles=legend_handles, loc="lower center")
 
     # Perform image range transform
-    images = keras_cv.utils.transform_value_range(
+    images = utils.transform_value_range(
         images, original_range=value_range, target_range=(0, 255)
     )
     images = utils.to_numpy(images)
@@ -178,8 +174,9 @@ def plot_image_gallery(
             current_axis.margins(x=0, y=0)
             current_axis.axis("off")
 
-    if path is None and not show:
-        return
+    if path is None and show is None:
+        return fig
+
     if path is not None:
         plt.savefig(
             fname=path,

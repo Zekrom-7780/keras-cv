@@ -16,7 +16,6 @@ import warnings
 
 import tensorflow as tf
 
-import keras_cv
 from keras_cv import bounding_box
 from keras_cv.api_export import keras_cv_export
 from keras_cv.layers.preprocessing.vectorized_base_image_augmentation_layer import (  # noqa: E501
@@ -219,6 +218,33 @@ class RandomShear(VectorizedBaseImageAugmentationLayer):
     def augment_labels(self, labels, transformations, **kwargs):
         return labels
 
+    def augment_segmentation_masks(
+        self, segmentation_masks, transformations, **kwargs
+    ):
+        x, y = transformations["shear_x"], transformations["shear_y"]
+
+        if x is not None:
+            transforms_x = self._build_shear_x_transform_matrix(x)
+            segmentation_masks = preprocessing.transform(
+                images=segmentation_masks,
+                transforms=transforms_x,
+                interpolation="nearest",
+                fill_mode=self.fill_mode,
+                fill_value=self.fill_value,
+            )
+
+        if y is not None:
+            transforms_y = self._build_shear_y_transform_matrix(y)
+            segmentation_masks = preprocessing.transform(
+                images=segmentation_masks,
+                transforms=transforms_y,
+                interpolation="nearest",
+                fill_mode=self.fill_mode,
+                fill_value=self.fill_value,
+            )
+
+        return segmentation_masks
+
     def augment_bounding_boxes(
         self, bounding_boxes, transformations, images=None, **kwargs
     ):
@@ -253,7 +279,7 @@ class RandomShear(VectorizedBaseImageAugmentationLayer):
                 bounding_boxes, default_value=0
             )
 
-        bounding_boxes = keras_cv.bounding_box.convert_format(
+        bounding_boxes = bounding_box.convert_format(
             bounding_boxes,
             source=self.bounding_box_format,
             target="rel_xyxy",
@@ -310,7 +336,7 @@ class RandomShear(VectorizedBaseImageAugmentationLayer):
         bounding_boxes = bounding_box.clip_to_image(
             bounding_boxes, images=images, bounding_box_format="rel_xyxy"
         )
-        bounding_boxes = keras_cv.bounding_box.convert_format(
+        bounding_boxes = bounding_box.convert_format(
             bounding_boxes,
             source="rel_xyxy",
             target=self.bounding_box_format,

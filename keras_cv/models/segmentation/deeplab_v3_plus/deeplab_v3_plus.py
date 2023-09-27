@@ -21,6 +21,9 @@ from keras_cv.models.backbones.backbone_presets import backbone_presets
 from keras_cv.models.backbones.backbone_presets import (
     backbone_presets_with_weights,
 )
+from keras_cv.models.segmentation.deeplab_v3_plus.deeplab_v3_plus_presets import (  # noqa: E501
+    deeplab_v3_plus_presets,
+)
 from keras_cv.models.task import Task
 from keras_cv.utils.python_utils import classproperty
 from keras_cv.utils.train import get_feature_extractor
@@ -46,7 +49,7 @@ class DeepLabV3Plus(Task):
             somewhat sensible backbone to use in many cases is the
             `keras_cv.models.ResNet50V2Backbone.from_preset("resnet50_v2_imagenet")`.
         num_classes: int, the number of classes for the detection model. Note
-            that the `num_classes` doesn't contain the background class, and the
+            that the `num_classes` contains the background class, and the
             classes from the data should be represented by integers with range
             [0, `num_classes`).
         projection_filters: int, number of filters in the convolution layer
@@ -229,13 +232,15 @@ class DeepLabV3Plus(Task):
     @classproperty
     def presets(cls):
         """Dictionary of preset names and configurations."""
-        return copy.deepcopy(backbone_presets)
+        return copy.deepcopy({**backbone_presets, **deeplab_v3_plus_presets})
 
     @classproperty
     def presets_with_weights(cls):
         """Dictionary of preset names and configurations that include
         weights."""
-        return copy.deepcopy(backbone_presets_with_weights)
+        return copy.deepcopy(
+            {**backbone_presets_with_weights, **deeplab_v3_plus_presets}
+        )
 
     @classproperty
     def backbone_presets(cls):

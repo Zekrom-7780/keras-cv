@@ -5,16 +5,20 @@ on:
   pull_request:
   release:
     types: [created]
+
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test the code with tf.keras
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
+    - name: Set up Python 3.9
       uses: actions/setup-python@v1
       with:
-        python-version: 3.8
+        python-version: 3.9
     - name: Get pip cache dir
       id: pip-cache
       run: |
@@ -48,10 +52,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
+    - name: Set up Python 3.9
       uses: actions/setup-python@v1
       with:
-        python-version: 3.8
+        python-version: 3.9
     - name: Get pip cache dir
       id: pip-cache
       run: |
@@ -87,6 +91,7 @@ jobs:
                keras_cv/models/classification \
                keras_cv/models/object_detection/retinanet \
                keras_cv/models/object_detection/yolo_v8 \
+               keras_cv/models/object_detection_3d \
                keras_cv/models/segmentation \
                --durations 0
   format:
@@ -94,10 +99,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
+    - name: Set up Python 3.9
       uses: actions/setup-python@v1
       with:
-        python-version: 3.8
+        python-version: 3.9
     - name: Get pip cache dir
       id: pip-cache
       run: |
